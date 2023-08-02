@@ -1,24 +1,25 @@
 package me.Bentipa.BungeeSignsFree;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import me.Bentipa.BungeeSignsFree.bungeeconfig.BungeeCordConfigGetter;
+import de.stealthcoders.Bentipa.bungeecloud.saving.BungeeCordConfigGetter;
 import me.Bentipa.BungeeSignsFree.metrics.Metrics;
 import me.Bentipa.BungeeSignsFree.sheduler.BungeeSignsPinger;
 import me.Bentipa.BungeeSignsFree.sheduler.BungeeSignsRefresher;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Core extends JavaPlugin {
 
@@ -43,6 +44,7 @@ public class Core extends JavaPlugin {
     public int TIMEOUT = 0;
 
     private static Core inst;
+    public static boolean DEBUG = false;
 
     @Override
     public void onEnable() {
@@ -53,13 +55,19 @@ public class Core extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BSignsListener(this), this);
 
         BungeeCordConfigGetter bccg = new BungeeCordConfigGetter(this);
-        if(bccg.isError()){
+        if (bccg.getConfig() == null) {
+            sendLogMessage(ChatColor.RED + "You have to copy the content of your BungeeCord config.yml into bungeeconfig.yml !");
+            getPluginLoader().disablePlugin(this);
             return;
         }
-        for (String key : bccg.getConfig().getServers().keySet()) {
-            InetSocketAddress adr = bccg.getConfig().getServers().get(key);
-            servers.add(new ServerInfo(key, key, adr.getHostString(), adr
-                    .getPort(), 40));
+        if (bccg.getConfig().getServers() == null || bccg.getConfig().getServers().isEmpty()) {
+            sendLogMessage(ChatColor.RED + "You have to copy the content of your BungeeCord config.yml into bungeeconfig.yml !");
+        } else {
+            for (String key : bccg.getConfig().getServers().keySet()) {
+                InetSocketAddress adr = bccg.getConfig().getServers().get(key);
+                servers.add(new ServerInfo(key, key, adr.getHostString(), adr
+                        .getPort(), 40));
+            }
         }
 
         TIMEOUT = getConfig().getInt("timeout");
@@ -87,14 +95,13 @@ public class Core extends JavaPlugin {
         getCommand("removebssign").setExecutor(cmds);
         getCommand("bsinfo").setExecutor(cmds);
         getCommand("bsreload").setExecutor(cmds);
-
-        try {
-            Metrics metrics = new Metrics(this);
-            metrics.start();
-            this.getLogger().info("[Info] Metrics started");
-        } catch (IOException e) {
-            this.getLogger().info("[Info] Failed to start Metrics");
+        DEBUG = getConfig().getBoolean("debug");
+        if (DEBUG) {
+            sendLogMessage(ChatColor.RED + "### DEBUG MODE ON ###");
         }
+
+        Metrics metrics = new Metrics(this);
+
         long time = (long) (10.3 * 20L);
         final Core instance = this;
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
@@ -102,7 +109,7 @@ public class Core extends JavaPlugin {
             public void run() {
                 //START SCHEDULERS
                 Bukkit.getScheduler().runTaskLater(instance, bsr, 40L);
-                Bukkit.getScheduler().runTaskLaterAsynchronously(instance, pinger, 5L);
+                pinger.start();
                 getLogger().info("[Info] Started Pinger and Refresher!");
             }
         }, time);
@@ -177,6 +184,10 @@ public class Core extends JavaPlugin {
         return false;
     }
 
+    public void sendLogMessage(String msg) {
+        getServer().getConsoleSender().sendMessage(ChatColor.GRAY + "[" + ChatColor.DARK_PURPLE + getDescription().getName() + ChatColor.GRAY + "] " + ChatColor.WHITE + msg);
+    }
+
     public Sign getSign(BungeeSign ffs) {
         for (BungeeSign s : signs) {
             if (ffs.equals(s)) {
@@ -197,6 +208,13 @@ public class Core extends JavaPlugin {
             }
         }
         return null;
+    }
+
+    private boolean isSignBlock(Block block) {
+        if (DEBUG) {
+            System.out.println("Checking if block is sign: sign in " + block.getType().name().toLowerCase() + "?");
+        }
+        return block.getType().name().toLowerCase().contains("sign");
     }
 
     public BungeeSign getBungeeSignsSign(Location loc) {
@@ -249,6 +267,8 @@ public class Core extends JavaPlugin {
             config.load(configFile);
         } catch (IOException | InvalidConfigurationException e) {
         }
+        config.options().copyDefaults(true);
+        saveConfig();
     }
 
     @Override

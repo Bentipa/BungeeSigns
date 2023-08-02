@@ -1,16 +1,15 @@
 package me.Bentipa.BungeeSignsFree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import lombok.Getter;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Effect;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Entity;
@@ -32,18 +31,18 @@ public class BungeeSign {
         initRealsign();
     }
 
-    private void initRealsign() {
-//        System.out.println(loc.toRealLocation().getWorld());
-//        System.out.println(loc.toRealLocation().getBlockX());
-//        System.out.println(loc.toRealLocation().getBlockY());
-//        System.out.println(loc.toRealLocation().getBlockZ());
+    private boolean errorMessageSent = false;
 
+    private void initRealsign() {
         try {
             realsign = (Sign) loc.toRealLocation().getWorld().getBlockAt(loc.toRealLocation()).getState();
         } catch (Exception e) {
-//            e.printStackTrace();
-            // Unable to set Sign!
-            Bukkit.getLogger().log(Level.SEVERE, "Error in loading/creating BungeeSign which connects to Server ''{0}''", si);
+            // Unable to set Sign!  
+            if (!errorMessageSent) {
+                Bukkit.getLogger().log(Level.SEVERE, "Error in loading/creating BungeeSign which connects to Server ''{0}'' with Address ''{1}''", new String[]{si.getName(), si.getAddress().toString()});
+                e.printStackTrace();
+                errorMessageSent = true;
+            }
         }
     }
 
@@ -114,12 +113,23 @@ public class BungeeSign {
             initRealsign();
         }
         try {
+            if (Core.DEBUG) {
+                System.out.println(getServer() + "-> Chunk " + getLocation().getChunk() + " Sign " + getSign());
+            }
             if (getLocation().getChunk() != null && getSign() != null) {
                 if (getLocation().getChunk().isLoaded()) {
+                    if (Core.DEBUG) {
+                        System.out.println("Chunk-Loaded " + getLocation().getChunk().isLoaded());
+                        System.out.println("Online: " + si.isOnline());
+                    }
 
                     if (si.isOnline()) {
 
                         int line = 0;
+                        if (Core.DEBUG) {
+                            System.out.println("CurrentLines : " + this.lines.values());
+                            System.out.println("Size: " + this.lines.values().size());
+                        }
                         List<String> liness = new ArrayList<>();
                         for (String s : this.lines.values()) {
                             String set = BungeeSignStringParser.getString(this, line, s);
@@ -131,6 +141,9 @@ public class BungeeSign {
                         for (int i = 0; i < 4; i++) {
 //                        linesa[i] = lines.get(i);
                             getSign().setLine(i, liness.get(i));
+                            if (Core.DEBUG) {
+                                System.out.println("Set line " + i + " to " + liness.get(i));
+                            }
                         }
                         if (getSign() != null) {
                             getSign().update(true);
@@ -157,7 +170,7 @@ public class BungeeSign {
                         } else {
                             core.getLogger().log(Level.SEVERE, "Error[Real Sign not found] in refreshing Sign -> {0}", this.getServer());
                         }
-                    }                    
+                    }
                 }
             }
         } catch (IndexOutOfBoundsException | NumberFormatException e) {
@@ -220,11 +233,11 @@ public class BungeeSign {
         }
         return entities;
     }
-   
+
     public String extractColor(String raw) {
         return ChatColor.translateAlternateColorCodes('&', raw);
     }
- 
+
     public static BungeeSign outOfString(Core bSignsMain, String s) {
         String[] parts = s.split(" ");
         String position = parts[1];
@@ -240,7 +253,7 @@ public class BungeeSign {
         bs.setLine(3, parts[6].replace("_", " "));
         return bs;
     }
-   
+
     public ServerInfo getServerInfo() {
         return si;
     }

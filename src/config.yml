@@ -10,5 +10,10 @@ chunk-radius: 0
 server-max-failed-connections: 5
 # Enter-Message:
 enter-msg: &3You enter Server %server !
+send-msg: true
 # debug mode
 debug: false
+teleport-mouse: both
+teleport-sneak: ignore
+socket-charset: 'UTF-8'
+socket-protocol-version: 47

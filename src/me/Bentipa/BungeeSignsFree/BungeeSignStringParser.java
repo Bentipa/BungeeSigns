@@ -33,7 +33,7 @@ public class BungeeSignStringParser {
         if (ph.contains("%cplayers%")) {
             ph = ph.replace("%cplayers%", bs.getServerInfo().getPlayerCount() + "");
             placeholders.put("%cplayers%", bs.getServerInfo().getPlayerCount()+"");
-        }
+        }        
 
         if (ph.contains("%mplayers%")) {
             ph = ph.replace("%mplayers%", bs.getServerInfo().getMaxPlayers() + "");

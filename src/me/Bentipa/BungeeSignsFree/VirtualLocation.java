@@ -1,5 +1,5 @@
 /*
- * stealth-coders (c) 2016 
+ * stealth-coders (c) 2016
  * Copyright by stealth-coders:
  * You are NOT allowed to share, upload or decompile this plugin at any time.
  * You are NOT allowed to share, upload or use code parts/snippets of this plugin without our consent.
@@ -13,11 +13,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
 /**
- *
  * @author Benjamin
  */
 public class VirtualLocation {
-    
+
     @Getter
     private double x;
     @Getter
@@ -26,22 +25,22 @@ public class VirtualLocation {
     private double z;
     @Getter
     private String worldname;
-    
-    public VirtualLocation(Location realloc){
+
+    public VirtualLocation(Location realloc) {
         this.x = realloc.getBlockX();
         this.y = realloc.getBlockY();
         this.z = realloc.getBlockZ();
         this.worldname = realloc.getWorld().getName();
     }
-    
-    public VirtualLocation(double x, double y, double z, String world){
+
+    public VirtualLocation(double x, double y, double z, String world) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.worldname = world;
     }
-    
-    public Location toRealLocation(){        
+
+    public Location toRealLocation() {
         return new Location(Bukkit.getWorld(worldname), x, y, z);
     }
 }

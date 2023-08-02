@@ -1,36 +1,19 @@
 # Should the Plugin check if the server is in sign-creation reachable?
 server-alive: true
-# String which will be shown if the server is online:
-server-online: '&7[&2Online&7]'
-# String which will be shown if the server is offline:
-server-offline: '&7[&2Offline&7]'
-# Should the block behind the Sign change to fullness of the server?
-server-block: true
-# Which Block should be shown if the server is empty?
-server-empty: DIAMOND_BLOCK
-# Which Block should be shown if the server is half full?
-server-half: LAPIS_BLOCK
-# Which Block should be shown if the server is full?
-server-full: GOLD_BLOCK
-# Which Block should be shown if the server is offline?
-server-off: REDSTONE_BLOCK
-# Show Effect
-sign-click-effect-show: true
-# Which Effect should be played if the sign is clicked?
-sign-click-effect: lava
-# Which is the symbol for empty?
-sign-symbol-empty: 9675
-# Which is the symbol for full?
-sign-symbol-full: 9679
 # Sign refresh delay, in milliseconds
 sign-refresh: 1000
-# Color-Refresh, in milliseconds
-color-refresh: 800
 # Ping-TimeOut
-timeout: 1000
+timeout: 4000
 # Chunk Radius - 0|1|2
 chunk-radius: 0
-# Use BungeeChannelMode
-b-c: false
+# Max failed connections
+server-max-failed-connections: 5
 # Enter-Message:
 enter-msg: &3You enter Server %server !
+send-msg: true
+# debug mode
+debug: false
+teleport-mouse: both
+teleport-sneak: ignore
+socket-charset: 'UTF-8'
+socket-protocol-version: 47

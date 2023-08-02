@@ -1,6 +1,6 @@
-name: BungeeSignsPremium
-version: 2.1
-main: me.Bentipa.BungeeSigns.BSignsMain
+name: BungeeServerSigns
+version: 2.0
+main: me.Bentipa.BungeeSignsFree.Core
 author: Bentipa
 commands:
 
@@ -9,19 +9,14 @@ commands:
       description: Informations.
       usage: /<command>
       permission: BungeeSigns.info
-      
-   bsupdate:
-      description: Update the Plugin.
-      usage: /<command>
-      permission: BungeeSigns.update
-      
+
    createBSSign:
-     description: Create a FreeFight-Connection-Sign.
+     description: Create a Connection-Sign.
      usage: /<command>
      permission: BungeeSigns.create
      
    removeBSSign:
-     description: Remove a FreeFight-Connection-Sign.
+     description: Remove a Connection-Sign.
      usage: /<command>
      permission: BungeeSigns.remove
       

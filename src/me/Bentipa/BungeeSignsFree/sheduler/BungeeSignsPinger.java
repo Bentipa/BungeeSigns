@@ -15,48 +15,82 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * @author Bentipa(Benjamin)
  * @year 2016
- *
  */
 public class BungeeSignsPinger implements Runnable, Listener {
 
     private final me.Bentipa.BungeeSignsFree.Core plugin;
 
+    private final BungeeSignsPinger instance;
+
     public BungeeSignsPinger(me.Bentipa.BungeeSignsFree.Core bSignsMain) {
+        this.instance = this;
         this.plugin = bSignsMain;
         bSignsMain.getServer().getPluginManager().registerEvents(this, bSignsMain);
     }
 
+    public void start() {
+        System.out.println("Refresh time: " + (plugin.getConfig().getInt("sign-refresh") / 1000) * 20);
+//        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this, (plugin.getConfig().getInt("sign-refresh") / 1000) * 20, 0);
+        BukkitRunnable runnable = new BukkitRunnable() {
+
+            @Override
+            public void run() {
+                instance.run();
+            }
+        };
+        runnable.runTaskTimerAsynchronously(plugin, 0, (plugin.getConfig().getInt("sign-refresh") / 1000) * 20L);
+    }
+
     @Override
     public void run() {
-
         final List<ServerInfo> servers = plugin.servers;
-        BSSPingEvent event = new BSSPingEvent(servers);
-        Bukkit.getPluginManager().callEvent(event);
-        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, this, (plugin.getConfig().getInt("sign-refresh") / 1000) * 20);
+        final BSSPingEvent event = new BSSPingEvent(servers);
+        BukkitRunnable bukkitRunnable = new BukkitRunnable() {
+            @Override
+            public void run() {
+                Bukkit.getPluginManager().callEvent(event);
+            }
+        };
+        bukkitRunnable.runTaskLater(plugin, 1);
+        if (Core.DEBUG) {
+            System.out.println("Called BSSPingEvents for " + servers.size() + " Servers!");
+        }
     }
 
     @EventHandler
     public void onEvent(BSSPingEvent e) {
         if (!e.isCancelled()) {
-            for (ServerInfo server : e.getServers()) {
-//				System.out.println("Checking Server " + server.getName());
+            if (Core.DEBUG) {
+                System.out.println("Received BSSPingEvents for " + e.getServers().size() + " Servers!");
+            }
+            for (final ServerInfo server : e.getServers()) {
                 if (server.isLocal()) {
-//					System.out.println("Local!");
-                    final String status = server.getMotd();
-                    ServerListPingEvent ping = new ServerListPingEvent(new InetSocketAddress(Bukkit.getIp(), Bukkit.getPort()).getAddress(), Bukkit.getMotd(), Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
-                    Core.getInstance().callSyncEvent(ping);
-                    server.setMotd(ping.getMotd());
-                    server.setPlayerCount(ping.getNumPlayers());
-                    server.setMaxPlayers(ping.getMaxPlayers());
-                    server.setPingStart(System.currentTimeMillis());
-                    server.setPingEnd(System.currentTimeMillis());
-                    
+                    if (Core.DEBUG) {
+                        System.out.println("local");
+                    }
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+
+                        @Override
+                        public void run() {
+                            server.setMotd(Bukkit.getMotd());
+                            server.setPlayerCount(Bukkit.getOnlinePlayers().size());
+                            server.setMaxPlayers(Bukkit.getMaxPlayers());
+                            server.setPingStart(System.currentTimeMillis());
+                            server.setPingEnd(System.currentTimeMillis());
+
+                            BSSBackSendEvent backsend = new BSSBackSendEvent(server, null);
+                            plugin.callSyncEvent(backsend);
+                        }
+                    });
                 } else {
-//					System.out.println("Ext.!");
+                    if (Core.DEBUG) {
+                        System.out.println("Ext.!");
+                    }
                     pingAsync(server);
                 }
 
@@ -86,7 +120,9 @@ public class BungeeSignsPinger implements Runnable, Listener {
 
     private void pingAsync(final ServerInfo server) {
         final ServerPing ping = server.getPing();
-//		System.out.println("Pinging!");
+        if (Core.DEBUG) {
+            System.out.println("Pinging Async!");
+        }
         if (!ping.isFetching()) {
             Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
                 @Override
@@ -96,31 +132,36 @@ public class BungeeSignsPinger implements Runnable, Listener {
                     ping.setTimeout(server.getTimeout());
                     ping.setFetching(true);
 
-//					System.out.println("Starting!");
+                    if (Core.DEBUG) {
+                        System.out.println("Starting!");
+                    }
                     try {
-                        final String status = server.getMotd();
                         ServerPing.SResponse response = ping.fetchData();
-                        server.setProtocol(response.getProtocol());
-                        server.setMotd(response.getDescription());
-                        server.setPlayerCount(response.getPlayers());
-                        server.setMaxPlayers(response.getSlots());
+                        server.setMotd(response.description);
+                        server.setPlayerCount(response.players);
+                        server.setMaxPlayers(response.slots);
+                        server.setOnline(true);
                         server.setPingStart(pingStartTime);
-
-//						System.out.println("Fetched Data!");
-//						System.out.println("Motd: " + response.getDescription());
-//						System.out.println("PlayerCount: " + response.getPlayers());
-//						System.out.println("PlayersMax: " + response.getSlots());
-//						
+                        if (Core.DEBUG) {
+                            System.out.println("Fetched Data! {" + server.getName() + "}");
+                            System.out.println("Motd: " + response.description);
+                            System.out.println("Players: " + response.players);
+                            System.out.println("Slots: " + response.slots);
+                        }
                         BSSBackSendEvent backsend = new BSSBackSendEvent(server, ping);
                         plugin.callSyncEvent(backsend);
                         server.setFailedConnections(0);
 
                     } catch (Exception e) {
                         server.setFailedConnections(server.getFailedConnections() + 1);
-//                                                System.out.println("Ping failed!");
-//                                                e.printStackTrace();
+                        if (Core.DEBUG) {
+                            System.out.println("Ping failed!");
+                            e.printStackTrace();
+                        }
                     } finally {
-//					System.out.println("Finished!");
+                        if (Core.DEBUG) {
+                            System.out.println("Finished!");
+                        }
                         ping.setFetching(false);
                         server.setPingEnd(System.currentTimeMillis());
                     }

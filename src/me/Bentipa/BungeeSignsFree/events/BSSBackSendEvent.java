@@ -10,56 +10,53 @@ import org.bukkit.event.HandlerList;
 /**
  * @author Bentipa(Benjamin) | codebucketdev
  * @year 2016
- **/
-public class BSSBackSendEvent extends  Event implements Cancellable{
+ *
+ */
+public class BSSBackSendEvent extends Event implements Cancellable {
 
-	
-	private static final HandlerList handlers = new HandlerList();
-	private ServerInfo si;
-	private ServerPing t;
-	private boolean cancelled;
-	
-	public BSSBackSendEvent(ServerInfo si, ServerPing t)
-	{
-		setServerInfo(si);
-		setServerPing(t);
-	}
-	
-	public static HandlerList getHandlerList() 
-	{
+    private static final HandlerList handlers = new HandlerList();
+    private ServerInfo si;
+    private ServerPing t;
+    private boolean cancelled;
+
+    public BSSBackSendEvent(ServerInfo si, ServerPing t) {
+        setServerInfo(si);
+        setServerPing(t);
+    }
+
+    public static HandlerList getHandlerList() {
         return handlers;
     }
-	
 
-	@Override
-	public boolean isCancelled() {		
-		return cancelled;
-	}
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
+    }
 
-	@Override
-	public void setCancelled(boolean cancel) {
-		cancelled = cancel;
-	}
+    @Override
+    public void setCancelled(boolean cancel) {
+        cancelled = cancel;
+    }
 
-	@Override
-	public HandlerList getHandlers() {
-		return handlers;
-	}
+    @Override
+    public HandlerList getHandlers() {
+        return handlers;
+    }
 
-	public ServerInfo getServerInfo() {
-		return si;
-	}
+    public ServerInfo getServerInfo() {
+        return si;
+    }
 
-	public void setServerInfo(ServerInfo si) {
-		this.si = si;
-	}
+    public void setServerInfo(ServerInfo si) {
+        this.si = si;
+    }
 
-	public ServerPing getServerPing() {
-		return t;
-	}
+    public ServerPing getServerPing() {
+        return t;
+    }
 
-	public void setServerPing(ServerPing t) {
-		this.t = t;
-	}
+    public void setServerPing(ServerPing t) {
+        this.t = t;
+    }
 
 }

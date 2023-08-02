@@ -12,7 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import static me.Bentipa.BungeeSignsFree.Core.inCreation;
-import me.Bentipa.BungeeSignsFree.bungeeconfig.BungeeCordConfigGetter;
+import de.stealthcoders.Bentipa.bungeecloud.saving.BungeeCordConfigGetter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,7 +27,6 @@ import org.bukkit.entity.Player;
 public class Commands implements CommandExecutor {
 
     @Override
-
     public boolean onCommand(CommandSender sender, Command cmd,
             String commandLabel, String[] args) {
         if (sender instanceof Player) {
@@ -95,8 +94,8 @@ public class Commands implements CommandExecutor {
             }
 
         }
+        sender.sendMessage("You can only issues this command as a player!");
         return false;
-
     }
 
 }

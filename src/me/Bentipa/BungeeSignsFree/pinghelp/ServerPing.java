@@ -1,22 +1,18 @@
 package me.Bentipa.BungeeSignsFree.pinghelp;
 
 import com.google.gson.Gson;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import lombok.Getter;
-import lombok.Setter;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import me.Bentipa.BungeeSignsFree.Core;
 
 public class ServerPing {
 
@@ -24,6 +20,16 @@ public class ServerPing {
     private InetSocketAddress host;
     private int timeout = 7000;
     private Gson gson = new Gson();
+
+    public int getFailedConnections() {
+        return failedConnections;
+    }
+
+    public void setFailedConnections(int failedConnections) {
+        this.failedConnections = failedConnections;
+    }
+
+    private int failedConnections = 0;
 
     public void setAddress(InetSocketAddress host) {
         this.host = host;
@@ -78,6 +84,16 @@ public class ServerPing {
         }
     }
 
+    private void writeVarString(DataOutputStream out, String paramString) throws IOException {
+        writeVarInt(out, paramString.length());
+        out.write(paramString.getBytes(Charset.forName("utf-8")));
+    }
+
+    private void sendPacket(DataOutputStream out, byte[] data) throws IOException {
+        writeVarInt(out, data.length);
+        out.write(data);
+    }
+
     @SuppressWarnings({"resource", "unused"})
     public SResponse fetchData() throws IOException {
         Socket socket = new Socket();
@@ -85,8 +101,7 @@ public class ServerPing {
         DataOutputStream dataOutputStream;
         InputStream inputStream;
         InputStreamReader inputStreamReader;
-
-        socket.setSoTimeout(this.timeout);
+//        socket.setSoTimeout(this.timeout);
         socket.connect(host, timeout);
 
         outputStream = socket.getOutputStream();
@@ -96,94 +111,122 @@ public class ServerPing {
         inputStreamReader = new InputStreamReader(inputStream);
 
         ByteArrayOutputStream b = new ByteArrayOutputStream();
-        DataOutputStream handshake = new DataOutputStream(b);
-        handshake.writeByte(0x00); //packet id for handshake
-        writeVarInt(handshake, 4); //protocol version
-        writeVarInt(handshake, this.host.getHostString().length()); //host length
-        handshake.writeBytes(this.host.getHostString()); //host string
-        handshake.writeShort(host.getPort()); //port
-        writeVarInt(handshake, 1); //state (1 for handshake)
+        DataOutputStream handOut = new DataOutputStream(b);
 
-        writeVarInt(dataOutputStream, b.size()); //prepend size
-        dataOutputStream.write(b.toByteArray()); //write handshake packet
+        handOut.write(new byte[]{0x00});
+        writeVarInt(handOut, Core.getInstance().getConfig().getInt("socket-protocol-version", 47));
+//        writeVarInt(handOut, 4);
+        writeVarInt(handOut, host.getHostString().getBytes(Core.getInstance().getConfig().getString("socket-charset")).length);
+        handOut.writeBytes(host.getHostName());
+        handOut.writeShort(host.getPort());
+        writeVarInt(handOut, 1);
 
-        dataOutputStream.writeByte(0x01); //size is only 1
-        dataOutputStream.writeByte(0x00); //packet id for ping
+//        dataOutputStream.writeInt(b.size());
+        writeVarInt(dataOutputStream, b.size());
+        dataOutputStream.write(b.toByteArray());
+
+        dataOutputStream.write(new byte[]{0x01});
+        dataOutputStream.write(new byte[]{0x00});
+
         DataInputStream dataInputStream = new DataInputStream(inputStream);
         int size = readVarInt(dataInputStream); //size of packet
         int id = readVarInt(dataInputStream); //packet id
 
         if (id == -1) {
-            throw new IOException("Premature end of stream.");
+//            throw new IOException("Premature end of stream.");
+            return null;
         }
-
         if (id != 0x00) { //we want a status response
-            throw new IOException("Invalid packetID");
+//            throw new IOException("Invalid packetID");
+            return null;
         }
+
         int length = readVarInt(dataInputStream); //length of json string
-
         if (length == -1) {
-            throw new IOException("Premature end of stream.");
+//            throw new IOException("Premature end of stream.");
+            return null;
         }
-
-        if (length == 0) {
-            throw new IOException("Invalid string length.");
+        if (length < 1) {
+//            throw new IOException("Invalid string length.");
+            return null;
         }
 
         byte[] in = new byte[length];
         dataInputStream.readFully(in);  //read json string
-        String json = new String(in);
+        String json = new String(in, Core.getInstance().getConfig().getString("socket-charset"));
+//        String json = new String(in, StandardCharsets.UTF_8);
 
-        long now = System.currentTimeMillis();
-        dataOutputStream.writeByte(0x09); //size of packet
-        dataOutputStream.writeByte(0x01); //0x01 for ping
-        dataOutputStream.writeLong(now); //time!?
-
-        readVarInt(dataInputStream);
-        id = readVarInt(dataInputStream);
-        if (id == -1) {
-            throw new IOException("Premature end of stream.");
-        }
-
-        if (id != 0x01) {
-            throw new IOException("Invalid packetID");
-        }
-        long pingtime = dataInputStream.readLong(); //read response
-
-        JSONObject jsono = new JSONObject();
+        JSONObject jsonMother = new JSONObject();
         JSONParser parser = new JSONParser();
         try {
-            jsono = (JSONObject) parser.parse(json);
+            jsonMother = (JSONObject) parser.parse(json);
         } catch (ParseException ex) {
             Logger.getLogger(ServerPing.class.getName()).log(Level.SEVERE, null, ex);
         }
-        JSONObject version = (JSONObject) jsono.get("version");
-        String vers = (String) version.get("name");
+        JSONObject jsonVersion = (JSONObject) jsonMother.get("version");
+        String version = (String) jsonVersion.get("name");
 
         SResponse ret = new SResponse();
-        
-        String cV = vers.substring(vers.length()-5, vers.length()-2);       
-        if (cV.endsWith("1.9")) {            
+        if (Core.DEBUG) {
+            System.out.println("ServerPing| Version: " + version + "");
+            System.out.println("JSON: \n\r" + json);
+        }
+        String versionLabel = version.split(" ")[0];
+        String[] versionString = version.split(" ")[1].split("\\.");
+        int majorVersion = Integer.valueOf(versionString[0]);
+        int minorVersion = Integer.valueOf(versionString[1]);
+        int releaseVersion = versionString.length == 3 ? Integer.valueOf(versionString[2]) : 0;
+
+        if (version.contains("1.9")) {
             StatusResponse_19 res = gson.fromJson(json, StatusResponse_19.class);
-            res.setTime((int) (now - pingtime));
-            res.setTime((int) (now - pingtime));
-            ret.setDescription(res.getDescription());
-            ret.setFavicon(res.getFavicon());
-            ret.setPlayers(res.getPlayers().getOnline());
-            ret.setSlots(res.getPlayers().getMax());
-            ret.setTime(res.getTime());
-            ret.setProtocol(res.getVersion().getProtocol());
-            ret.setVers(res.getVersion().getName());
-        } else {            
+            ret.description = res.getDescription();
+            ret.favicon = res.getFavicon();
+            ret.players = res.getPlayers().getOnline();
+            ret.slots = res.getPlayers().getMax();
+            ret.time = res.getTime();
+            ret.protocol = res.getVersion().getProtocol();
+            ret.version = res.getVersion().getName();
+        } else if (version.contains("1.10") || version.contains("1.11") || version.contains("1.12")) {
+            StatusResponse_110 res = gson.fromJson(json, StatusResponse_110.class);
+            ret.description = res.getDescription();
+            ret.players = res.getPlayers().getOnline();
+            ret.slots = res.getPlayers().getMax();
+            ret.time = res.getTime();
+            ret.protocol = res.getVersion().getProtocol();
+            ret.version = res.getVersion().getName();
+        } else if (majorVersion == 1 && minorVersion > 12 && minorVersion < 16) {
+            StatusResponse_113 res = gson.fromJson(json, StatusResponse_113.class);
+            ret.description = res.getDescription().text;
+            ret.players = res.getPlayers().online;
+            ret.slots = res.getPlayers().max;
+            ret.time = -1;
+            ret.protocol = res.getVersion().protocol;
+            ret.version = res.getVersion().name;
+        } else if (majorVersion == 1 && minorVersion >= 16) {
+            StatusResponse_116 res = gson.fromJson(json, StatusResponse_116.class);
+            StringBuilder descriptionExtras = new StringBuilder();
+            if (res.getDescription().extra != null) {
+                for (StatusResponse_116.DescriptionExtra extra : res.getDescription().extra) {
+                    descriptionExtras.append(extra.text);
+                    descriptionExtras.append(" ");
+                }
+                descriptionExtras.deleteCharAt(descriptionExtras.length() - 1);
+            }
+            ret.description = res.getDescription().text + descriptionExtras.toString();
+            ret.players = res.getPlayers().online;
+            ret.slots = res.getPlayers().max;
+            ret.time = -1;
+            ret.protocol = res.getVersion().protocol;
+            ret.version = res.getVersion().name;
+        } else {
             StatusResponse res = gson.fromJson(json, StatusResponse.class);
-            res.setTime((int) (now - pingtime));
-            ret.setDescription(res.getDescription());
-            ret.setFavicon(res.getFavicon());
-            ret.setPlayers(res.getPlayers().getOnline());
-            ret.setSlots(res.getPlayers().getMax());
-            ret.setTime(res.getTime());
-            ret.setProtocol(res.getVersion().getProtocol());
-            ret.setVers(res.getVersion().getName());
+            ret.description = res.getDescription();
+            ret.favicon = res.getFavicon();
+            ret.players = res.getPlayers().getOnline();
+            ret.slots = res.getPlayers().getMax();
+            ret.time = res.getTime();
+            ret.protocol = res.getVersion().getProtocol();
+            ret.version = res.getVersion().getName();
         }
 
         dataOutputStream.close();
@@ -197,28 +240,13 @@ public class ServerPing {
 
     public class SResponse {
 
-        @Getter
-        @Setter
-        private String vers;
-        @Getter
-        @Setter
-        private String protocol;
-        @Getter
-        @Setter
-        private String favicon;
-        @Getter
-        @Setter
-        private int players;
-        @Getter
-        @Setter
-        private int slots;
-        @Getter
-        @Setter
-        private String description;
-        @Getter
-        @Setter
-        private int time;
-
+        public String version;
+        public String protocol;
+        public String favicon;
+        public String description;
+        public int players;
+        public int slots;
+        public int time;
     }
 
 }

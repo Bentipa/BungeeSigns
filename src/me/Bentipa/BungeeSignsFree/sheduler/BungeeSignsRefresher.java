@@ -3,6 +3,7 @@ package me.Bentipa.BungeeSignsFree.sheduler;
 import java.util.List;
 
 import me.Bentipa.BungeeSignsFree.BungeeSign;
+import me.Bentipa.BungeeSignsFree.Core;
 import me.Bentipa.BungeeSignsFree.events.BSSUpdateEvent;
 
 import org.bukkit.Bukkit;
@@ -78,6 +79,9 @@ public class BungeeSignsRefresher implements Runnable, Listener {
     private void refreshAll() {
         try {
             for (BungeeSign bs : core.getSigns()) {
+                if (Core.DEBUG) {
+                    System.out.println("Refreshing " + bs.getServer() + " -> " + bs.needsRefresh());
+                }
                 if (bs.needsRefresh()) {
                     bs.refresh();
                 }

@@ -1,6 +1,8 @@
 package me.Bentipa.BungeeSignsFree.pinghelp;
-
-public class StatusResponse_116 {
+/**
+ * Created by Benjamin on 04.09.2018.
+ */
+public class StatusResponse_113 {
 
     private Description description;
     private Players players;
@@ -16,11 +18,6 @@ public class StatusResponse_116 {
     }
 
     class Description {
-        String text;
-        DescriptionExtra[] extra;
-    }
-
-    class DescriptionExtra{
         String text;
     }
 
