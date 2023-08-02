@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="BungeeServerSignsFree.jar">
+    <output-path>$USER_HOME$/Desktop/All-Data/Spiele/Alles mit minecraft/Server 1.14.2/plugins</output-path>
+    <root id="archive" name="BungeeServerSignsFree.jar">
+      <element id="module-output" name="BungeeServerSignsFree" />
+      <element id="library" level="project" name="spigot-1.14.2" />
+      <element id="library" level="project" name="lombok" />
+    </root>
+  </artifact>
+</component>
