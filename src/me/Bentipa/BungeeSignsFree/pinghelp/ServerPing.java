@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -94,7 +95,7 @@ public class ServerPing {
         out.write(data);
     }
 
-    @SuppressWarnings({"resource", "unused"})
+    @SuppressWarnings({"unused"})
     public SResponse fetchData() throws IOException {
         Socket socket = new Socket();
         OutputStream outputStream;
@@ -168,8 +169,8 @@ public class ServerPing {
 
         SResponse ret = new SResponse();
         if (Core.DEBUG) {
-            System.out.println("ServerPing| Version: " + version + "");
-            System.out.println("JSON: \n\r" + json);
+            Core.getInstance().getLogger().log(Level.INFO, "Server Ping | Version: " + version);
+            Core.getInstance().getLogger().log(Level.INFO, "JSON: \n\r" + json);
         }
         String versionLabel = version.split(" ")[0];
         String[] versionString = version.split(" ")[1].split("\\.");
@@ -177,7 +178,7 @@ public class ServerPing {
         int minorVersion = Integer.valueOf(versionString[1]);
         int releaseVersion = versionString.length == 3 ? Integer.valueOf(versionString[2]) : 0;
 
-        if (version.contains("1.9")) {
+        if (majorVersion == 1 && minorVersion == 9) {
             StatusResponse_19 res = gson.fromJson(json, StatusResponse_19.class);
             ret.description = res.getDescription();
             ret.favicon = res.getFavicon();
@@ -186,7 +187,7 @@ public class ServerPing {
             ret.time = res.getTime();
             ret.protocol = res.getVersion().getProtocol();
             ret.version = res.getVersion().getName();
-        } else if (version.contains("1.10") || version.contains("1.11") || version.contains("1.12")) {
+        } else if (majorVersion == 1 && minorVersion >= 10 && minorVersion <= 12) {
             StatusResponse_110 res = gson.fromJson(json, StatusResponse_110.class);
             ret.description = res.getDescription();
             ret.players = res.getPlayers().getOnline();
@@ -194,7 +195,7 @@ public class ServerPing {
             ret.time = res.getTime();
             ret.protocol = res.getVersion().getProtocol();
             ret.version = res.getVersion().getName();
-        } else if (majorVersion == 1 && minorVersion > 12 && minorVersion < 16) {
+        } else if (majorVersion == 1 && minorVersion >= 13 && minorVersion <= 15) {
             StatusResponse_113 res = gson.fromJson(json, StatusResponse_113.class);
             ret.description = res.getDescription().text;
             ret.players = res.getPlayers().online;

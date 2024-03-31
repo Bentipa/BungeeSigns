@@ -114,62 +114,45 @@ public class BungeeSign {
         }
         try {
             if (Core.DEBUG) {
-                System.out.println(getServer() + "-> Chunk " + getLocation().getChunk() + " Sign " + getSign());
+                core.getLogger().log(Level.INFO, getServer() + "-> Chunk " + getLocation().getChunk() + " Sign " + getSign());
             }
             if (getLocation().getChunk() != null && getSign() != null) {
                 if (getLocation().getChunk().isLoaded()) {
                     if (Core.DEBUG) {
-                        System.out.println("Chunk-Loaded " + getLocation().getChunk().isLoaded());
-                        System.out.println("Online: " + si.isOnline());
+                        core.getLogger().log(Level.INFO, "Chunk-Loaded " + getLocation().getChunk().isLoaded());
+                        core.getLogger().log(Level.INFO, "Online: " + si.isOnline());
+                    }
+
+                    int line = 0;
+
+                    List<String> liness = new ArrayList<>();
+                    for (String s : this.lines.values()) {
+                        String set = BungeeSignStringParser.getString(this, line, s);
+                        set = ChatColor.translateAlternateColorCodes('&', set);
+                        liness.add(set);
+                    }
+
+                    //String[] linesa = new String[4];
+                    for (int i = 0; i < 4; i++) {
+                        //linesa[i] = lines.get(i);
+                        getSign().setLine(i, liness.get(i));
+                        if (Core.DEBUG)
+                            core.getLogger().log(Level.INFO, "Set line " + i + " to " + liness.get(i));
                     }
 
                     if (si.isOnline()) {
-
-                        int line = 0;
                         if (Core.DEBUG) {
-                            System.out.println("CurrentLines : " + this.lines.values());
-                            System.out.println("Size: " + this.lines.values().size());
+                            core.getLogger().log(Level.INFO, "CurrentLines : " + this.lines.values());
+                            core.getLogger().log(Level.INFO, "Size: " + this.lines.values().size());
                         }
-                        List<String> liness = new ArrayList<>();
-                        for (String s : this.lines.values()) {
-                            String set = BungeeSignStringParser.getString(this, line, s);
-                            set = ChatColor.translateAlternateColorCodes('&', set);
-                            liness.add(set);
-                        }
+                    }
 
-//                    String[] linesa = new String[4];
-                        for (int i = 0; i < 4; i++) {
-//                        linesa[i] = lines.get(i);
-                            getSign().setLine(i, liness.get(i));
-                            if (Core.DEBUG) {
-                                System.out.println("Set line " + i + " to " + liness.get(i));
-                            }
-                        }
-                        if (getSign() != null) {
-                            getSign().update(true);
-                        } else {
-                            core.getLogger().log(Level.SEVERE, "Error[Real Sign not found] in refreshing Sign -> {0}", this.getServer());
-                        }
+                    if (getSign() != null) {
+                        boolean success = getSign().update(true);
+                        if (Core.DEBUG)
+                            core.getLogger().log(Level.INFO, "Updated Sign " + this.getServer() + success);
                     } else {
-                        int line = 0;
-                        List<String> liness = new ArrayList<>();
-                        for (String s : this.lines.values()) {
-//                            System.out.println("======");
-//                            System.out.println("");
-                            String set = BungeeSignStringParser.getString(this, line, s);
-//                            System.out.println("");
-//                            System.out.println("======");
-                            set = ChatColor.translateAlternateColorCodes('&', set);
-                            liness.add(set);
-                        }
-                        for (int i = 0; i < 4; i++) {
-                            getSign().setLine(i, liness.get(i));
-                        }
-                        if (getSign() != null) {
-                            getSign().update(true);
-                        } else {
-                            core.getLogger().log(Level.SEVERE, "Error[Real Sign not found] in refreshing Sign -> {0}", this.getServer());
-                        }
+                        core.getLogger().log(Level.SEVERE, "Error[Real Sign not found] in refreshing Sign -> {0}", this.getServer());
                     }
                 }
             }

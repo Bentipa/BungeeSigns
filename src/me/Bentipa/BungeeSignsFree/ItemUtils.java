@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.enchantments.Enchantment;
@@ -45,11 +46,11 @@ public class ItemUtils {
 	/**
 	 * Sets a AnimatedLore of an ItemStack
 	 * @param i the ItemStack to use
-	 * @param lore - the Lore to add
+	 * @param id - the Lore to add
 	 */
 	public static void setAnimatedLore(final Inventory inv, JavaPlugin pl, ItemStack i, String id,  List<List<String>> steps, long time){
 //		System.out.println("AnimLore: steps.size()=="+steps.size());
-		if(steps.size() != 0 && steps.size() == 1){
+		if(!steps.isEmpty() && steps.size() == 1){
 		setLore(i, steps.get(0));
 		}else if(steps.size() > 1){
 			anPos.put(id, getPos(inv, i));
@@ -118,7 +119,7 @@ public class ItemUtils {
 	
 	private static void outList(List<String> sl){
 		for(String s: sl){
-			System.out.println(s);
+			Core.getInstance().getLogger().log(Level.INFO, s);
 		}
 	}
 	

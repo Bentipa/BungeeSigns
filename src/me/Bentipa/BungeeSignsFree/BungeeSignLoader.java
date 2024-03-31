@@ -32,7 +32,7 @@ public class BungeeSignLoader {
             bs.setLine(2, config.getString(server+".lines.3"));
             bs.setLine(3, config.getString(server+".lines.4"));
             ret.add(bs);
-            Core.getInstance().getLogger().log(Level.INFO, "Loaded Sign {0} !", server);
+            Core.getInstance().getLogger().log(Level.INFO, "Loaded Sign {0}!", server);
         }
         return ret;
     }

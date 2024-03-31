@@ -10,7 +10,7 @@ chunk-radius: 0
 server-max-failed-connections: 5
 # Enter-Message:
 enter-msg: &3You enter Server %server !
-send-msg: true
+send-msg: false
 # debug mode
 debug: false
 teleport-mouse: both

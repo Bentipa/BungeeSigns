@@ -27,14 +27,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
  */
 public class BungeeCordConfigGetter {
 
-    private Core c;
     private BungeeConfig bc;
-    private boolean fileCopied = true;
 
     public BungeeCordConfigGetter(Core c) {
-        this.c = c;
 
         File f = new File(c.getDataFolder() + "/bungeeconfig.yml");
+        boolean fileCopied = true;
         if (f.exists()) {
             c.sendLogMessage("BungeeConfig File found!");
             fileCopied = true;

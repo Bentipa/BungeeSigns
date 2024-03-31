@@ -3,10 +3,8 @@ version: 2.0
 main: me.Bentipa.BungeeSignsFree.Core
 author: Bentipa
 commands:
-
-
    bsinfo:
-      description: Informations.
+      description: Information.
       usage: /<command>
       permission: BungeeSigns.info
 

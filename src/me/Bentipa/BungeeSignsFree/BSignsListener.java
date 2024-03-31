@@ -1,6 +1,7 @@
 package me.Bentipa.BungeeSignsFree;
 
 import java.util.HashMap;
+import java.util.logging.Level;
 
 import me.Bentipa.BungeeSignsFree.Core.Step;
 
@@ -80,7 +81,7 @@ public class BSignsListener implements Listener {
                     }
                     if (core.isSaved(loc)) {
                         if (Core.DEBUG) {
-                            System.out.println("Click: User clicked on sign, trying to connect!");
+                            core.getLogger().log(Level.INFO, "Click: User clicked on sign, trying to connect!");
                         }
                         ByteArrayDataOutput out = ByteStreams.newDataOutput();//
                         if (core.ENTER_MSG != null && core.getBungeeSignsSign(loc) != null && Core.getInstance().getConfig().getBoolean("send-msg")) {
@@ -93,20 +94,19 @@ public class BSignsListener implements Listener {
                     }
                 } else {
                     if (Core.DEBUG) {
-                        System.out.println("Click: User does not have the correct permission.");
+                        core.getLogger().log(Level.INFO, "Click: User does not have the correct permission.");
                     }
                 }
             } else {
                 if (Core.DEBUG) {
-                    System.out.println("Click: User clicked not on a sign.");
+                    core.getLogger().log(Level.INFO, "Click: User clicked not on a sign.");
                 }
             }
         } else {
             if (Core.DEBUG) {
-                System.out.println("Click: Block is null");
+                core.getLogger().log(Level.INFO, "Click: Block is null");
             }
         }
-
     }
 
     private HashMap<Player, Integer> line = new HashMap<Player, Integer>();
@@ -173,10 +173,13 @@ public class BSignsListener implements Listener {
                         e.getPlayer().sendMessage(core.SS(Step.SIGN_CONTENT) + ChatColor.LIGHT_PURPLE + "You added a " + ChatColor.GOLD + "Players-Display" + ChatColor.LIGHT_PURPLE + "!");
                     }
                     if (msg.contains("%motd%")) {
-                        e.getPlayer().sendMessage(core.SS(Step.SIGN_CONTENT) + ChatColor.LIGHT_PURPLE + "You added a " + ChatColor.GOLD + "Motd-Display" + ChatColor.LIGHT_PURPLE + "!");
+                        e.getPlayer().sendMessage(core.SS(Step.SIGN_CONTENT) + ChatColor.LIGHT_PURPLE + "You added a " + ChatColor.GOLD + "MOTD-Display" + ChatColor.LIGHT_PURPLE + "!");
                     }
                     if (msg.contains("%state%")) {
-                        e.getPlayer().sendMessage(ChatColor.RED + "Not availiable in the Demo Version!");
+                        e.getPlayer().sendMessage(core.SS(Step.SIGN_CONTENT) + ChatColor.LIGHT_PURPLE + "You added a " + ChatColor.GOLD + "State-Display" + ChatColor.LIGHT_PURPLE + "!");
+                    }
+                    if (msg.contains("%version%")) {
+                        e.getPlayer().sendMessage(core.SS(Step.SIGN_CONTENT) + ChatColor.LIGHT_PURPLE + "You added a " + ChatColor.GOLD + "Version-Display" + ChatColor.LIGHT_PURPLE + "!");
                     }
                     if (msg.contains("%playersgra%")) {
                         e.getPlayer().sendMessage(ChatColor.RED + "Not availiable in the Demo Version!");

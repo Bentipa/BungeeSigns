@@ -3,6 +3,7 @@ package me.Bentipa.BungeeSignsFree.sheduler;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import me.Bentipa.BungeeSignsFree.BungeeSign;
 import me.Bentipa.BungeeSignsFree.Core;
@@ -34,7 +35,7 @@ public class BungeeSignsPinger implements Runnable, Listener {
     }
 
     public void start() {
-        System.out.println("Refresh time: " + (plugin.getConfig().getInt("sign-refresh") / 1000) * 20);
+        Core.getInstance().getLogger().log(Level.INFO, "Refresh time: " + (plugin.getConfig().getInt("sign-refresh") / 1000) * 20);
 //        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this, (plugin.getConfig().getInt("sign-refresh") / 1000) * 20, 0);
         BukkitRunnable runnable = new BukkitRunnable() {
 
@@ -58,7 +59,7 @@ public class BungeeSignsPinger implements Runnable, Listener {
         };
         bukkitRunnable.runTaskLater(plugin, 1);
         if (Core.DEBUG) {
-            System.out.println("Called BSSPingEvents for " + servers.size() + " Servers!");
+            Core.getInstance().getLogger().log(Level.INFO, "Called BSSPingEvents for " + servers.size() + " Servers!");
         }
     }
 
@@ -66,12 +67,12 @@ public class BungeeSignsPinger implements Runnable, Listener {
     public void onEvent(BSSPingEvent e) {
         if (!e.isCancelled()) {
             if (Core.DEBUG) {
-                System.out.println("Received BSSPingEvents for " + e.getServers().size() + " Servers!");
+                Core.getInstance().getLogger().log(Level.INFO, "Received BSSPingEvents for " + e.getServers().size() + " Servers!");
             }
             for (final ServerInfo server : e.getServers()) {
                 if (server.isLocal()) {
                     if (Core.DEBUG) {
-                        System.out.println("local");
+                        Core.getInstance().getLogger().log(Level.INFO, "local");
                     }
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 
@@ -89,7 +90,7 @@ public class BungeeSignsPinger implements Runnable, Listener {
                     });
                 } else {
                     if (Core.DEBUG) {
-                        System.out.println("Ext.!");
+                        Core.getInstance().getLogger().log(Level.INFO, "Ext.!");
                     }
                     pingAsync(server);
                 }
@@ -121,7 +122,7 @@ public class BungeeSignsPinger implements Runnable, Listener {
     private void pingAsync(final ServerInfo server) {
         final ServerPing ping = server.getPing();
         if (Core.DEBUG) {
-            System.out.println("Pinging Async!");
+            Core.getInstance().getLogger().log(Level.INFO, "Pinging Async!");
         }
         if (!ping.isFetching()) {
             Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
@@ -133,7 +134,7 @@ public class BungeeSignsPinger implements Runnable, Listener {
                     ping.setFetching(true);
 
                     if (Core.DEBUG) {
-                        System.out.println("Starting!");
+                        Core.getInstance().getLogger().log(Level.INFO, "Starting!");
                     }
                     try {
                         ServerPing.SResponse response = ping.fetchData();
@@ -142,29 +143,32 @@ public class BungeeSignsPinger implements Runnable, Listener {
                         server.setMaxPlayers(response.slots);
                         server.setOnline(true);
                         server.setPingStart(pingStartTime);
-                        if (Core.DEBUG) {
-                            System.out.println("Fetched Data! {" + server.getName() + "}");
-                            System.out.println("Motd: " + response.description);
-                            System.out.println("Players: " + response.players);
-                            System.out.println("Slots: " + response.slots);
-                        }
-                        BSSBackSendEvent backsend = new BSSBackSendEvent(server, ping);
-                        plugin.callSyncEvent(backsend);
+                        server.setVersion(response.version);
                         server.setFailedConnections(0);
-
+                        if (Core.DEBUG) {
+                            Core.getInstance().getLogger().log(Level.INFO, "Fetched Data! {" + server.getName() + "}");
+                            Core.getInstance().getLogger().log(Level.INFO, "Motd: " + response.description);
+                            Core.getInstance().getLogger().log(Level.INFO, "Players: " + response.players);
+                            Core.getInstance().getLogger().log(Level.INFO, "Slots: " + response.slots);
+                        }
                     } catch (Exception e) {
+                        server.setOnline(false);
+                        server.setPlayerCount(0);
                         server.setFailedConnections(server.getFailedConnections() + 1);
                         if (Core.DEBUG) {
-                            System.out.println("Ping failed!");
+                            Core.getInstance().getLogger().log(Level.INFO, "Ping failed!");
                             e.printStackTrace();
                         }
                     } finally {
                         if (Core.DEBUG) {
-                            System.out.println("Finished!");
+                            Core.getInstance().getLogger().log(Level.INFO, "Finished!");
                         }
                         ping.setFetching(false);
                         server.setPingEnd(System.currentTimeMillis());
                     }
+
+                    BSSBackSendEvent backsend = new BSSBackSendEvent(server, ping);
+                    plugin.callSyncEvent(backsend);
                 }
             });
         }
