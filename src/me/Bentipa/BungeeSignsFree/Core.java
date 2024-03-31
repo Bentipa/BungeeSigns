@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
 
 public class Core extends JavaPlugin {
 
@@ -82,7 +83,7 @@ public class Core extends JavaPlugin {
             bsr = new BungeeSignsRefresher(this);
             bsr.start();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         this.getLogger().info("[Info] Refresh-Task started!");
 
@@ -148,7 +149,7 @@ public class Core extends JavaPlugin {
     }
 
     protected String MSG_PREFIX() {
-        return ChatColor.GRAY + "[" + ChatColor.BLUE + "Bungee-Signs"
+        return ChatColor.GRAY + "[" + ChatColor.BLUE + "BungeeSigns"
                 + ChatColor.GRAY + "] ";
     }
 
@@ -212,7 +213,7 @@ public class Core extends JavaPlugin {
 
     private boolean isSignBlock(Block block) {
         if (DEBUG) {
-            System.out.println("Checking if block is sign: sign in " + block.getType().name().toLowerCase() + "?");
+            this.getLogger().log(Level.INFO, "Checking if block is sign: sign in " + block.getType().name().toLowerCase() + "?");
         }
         return block.getType().name().toLowerCase().contains("sign");
     }
